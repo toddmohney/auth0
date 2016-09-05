@@ -1,6 +1,7 @@
 module Auth0.User
   ( User (..)
   , getUser
+  , getUserProfile
   ) where
 
 import Auth0.Access (AccessToken (..))
@@ -13,6 +14,7 @@ import Data.Aeson (ToJSON, FromJSON, (.=), (.:))
 import qualified Data.Aeson as AE
 import Data.Monoid ((<>))
 import Data.Text (Text, pack, unpack)
+import Data.Text.Encoding (encodeUtf8)
 import Network.Wreq
 
 data User = User
@@ -55,6 +57,16 @@ getUser AccessToken{..} Config{..} = do
   resp <- liftIO $ getWith opts (unpack $ getBasePath <> "/userinfo")
   case AE.eitherDecode (resp ^. responseBody) of
     (Left err) -> throwError $ pack $ show err
-    (Right tok) -> return tok
+    (Right user) -> return user
   where
     opts = defaults & param "access_token" .~ [getToken]
+
+getUserProfile :: AccessToken -> Config -> User -> ExceptT Text IO User
+getUserProfile AccessToken{..} Config{..} User{..} = do
+  resp <- liftIO $ getWith opts (unpack $ getBasePath <> "/api/v2/users/" <> userID)
+  case AE.eitherDecode (resp ^. responseBody) of
+    (Left err) -> throwError $ pack $ show err
+    (Right user) -> return user
+  where
+    opts = defaults & header "authorization" .~ [token]
+    token = "Bearer " <> encodeUtf8 getIdToken
