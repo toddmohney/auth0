@@ -61,12 +61,12 @@ getUser AccessToken{..} Config{..} = do
   where
     opts = defaults & param "access_token" .~ [getToken]
 
-getUserProfile :: AccessToken -> Config -> User -> ExceptT Text IO User
-getUserProfile AccessToken{..} Config{..} User{..} = do
+getUserProfile :: Config -> User -> ExceptT Text IO User
+getUserProfile Config{..} User{..} = do
   resp <- liftIO $ getWith opts (unpack $ getBasePath <> "/api/v2/users/" <> userID)
   case AE.eitherDecode (resp ^. responseBody) of
     (Left err) -> throwError $ pack $ show err
     (Right user) -> return user
   where
     opts = defaults & header "authorization" .~ [token]
-    token = "Bearer " <> encodeUtf8 getIdToken
+    token = "Bearer " <> encodeUtf8 getAPIAccessToken

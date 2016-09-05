@@ -10,4 +10,5 @@ data Config = Config
   , getRedirectURI  :: Text
   , getGrantType    :: Text -- TODO: sum type
   , getBasePath     :: Text
+  , getAPIAccessToken :: Text
   } deriving (Show, Eq)
